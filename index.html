@@ -108,10 +108,20 @@
             opacity: 1;
         }
         .win-message {
-            color: #16a34a;
-            font-size: 1.5rem;
+            color: #16a34a; /* Green for success */
+            font-size: 1.2rem; /* Adjusted for more text */
             font-weight: bold;
             margin-top: 1rem;
+            line-height: 1.6; /* More line spacing for stats */
+        }
+        .win-message p { /* Style for the main win message text */
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .win-message .stats { /* Style for the stats line */
+            font-size: 1.1rem;
+            color: #4b5563; /* Medium gray for stats */
+            font-weight: normal;
         }
         #play-again {
              background-color: #facc15; /* Yellow */
@@ -123,7 +133,7 @@
              font-weight: 600;
              cursor: pointer;
              transition: background-color 0.3s ease, transform 0.1s ease;
-             margin-top: 1rem;
+             margin-top: 1.5rem; /* More space above button */
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
          #play-again:hover {
@@ -140,7 +150,7 @@
             margin-bottom: 1rem;
         }
         .game-container h1 { color: #111827; }
-        .game-container p { color: #4b5563; }
+        .game-container p.subtitle { color: #4b5563; } /* Added class for subtitle */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -152,7 +162,7 @@
 <body>
     <div class="game-container">
         <h1 class="text-3xl font-bold mb-2">Algebra Kitten Adventure!</h1>
-        <p class="mb-6">Help the kitten reach the food bowl by solving 20 math problems!</p>
+        <p class="mb-6 subtitle">Help the kitten reach the food bowl by solving 20 math problems!</p>
 
         <div class="progress-bar-container">
             <div class="progress-bar">
@@ -176,9 +186,7 @@
         <div id="feedback-incorrect" class="feedback-icon">💩</div>
 
         <div id="win-message" class="win-message" style="display: none;">
-            🎉 You did it! The kitten reached the bowl! 🎉
-            <button id="play-again">Play Again?</button>
-        </div>
+            </div>
 
     </div>
 
@@ -191,9 +199,8 @@
         const scoreDisplay = document.getElementById('score-display');
         const feedbackCorrect = document.getElementById('feedback-correct');
         const feedbackIncorrect = document.getElementById('feedback-incorrect');
-        const winMessage = document.getElementById('win-message');
-        const playAgainButton = document.getElementById('play-again');
-        const gameContainer = document.querySelector('.game-container');
+        const winMessageElement = document.getElementById('win-message'); // Renamed for clarity
+        // Play again button will be created dynamically in winGame()
 
         // --- Game State ---
         let currentProblem = null;
@@ -201,6 +208,7 @@
         let otherAnswer = null;
         let score = 0;
         const maxScore = 20;
+        let questionsAttempted = 0; // New variable to track attempts
         let isGameOver = false;
 
         // --- Problem Type Constants ---
@@ -222,7 +230,6 @@
             let num1, num2, result; otherAnswer = null;
             const rand = getRandomInt(1, 100); let type;
 
-            // Keep similar distribution, but numbers inside will be larger
             if (rand <= 35) { type = getRandomInt(ProblemType.ONE_STEP_ADD, ProblemType.ONE_STEP_DIV); }
             else if (rand <= 65) { type = getRandomInt(ProblemType.TWO_STEP_AX_PLUS_B, ProblemType.TWO_STEP_X_DIV_A_MINUS_B); }
             else { type = getRandomInt(ProblemType.SYSTEM_SIMPLE, ProblemType.SYSTEM_SUM_DIFF); }
@@ -231,54 +238,48 @@
                 switch (type) {
                     // --- ONE-STEP (with 3-digit potential) ---
                     case ProblemType.ONE_STEP_ADD:
-                        num1 = getRandomInt(10, 500); num2 = getRandomInt(10, 500); result = num1 + num2; // Result can be up to 1000
+                        num1 = getRandomInt(10, 500); num2 = getRandomInt(10, 500); result = num1 + num2;
                         const unknownAdd = getRandomInt(1, 3);
                         if (unknownAdd === 1) { problemText = `${variable} + ${num2} = ${result}`; correctAnswer = num1; }
                         else if (unknownAdd === 2) { problemText = `${num1} + ${variable} = ${result}`; correctAnswer = num2; }
                         else { problemText = `${num1} + ${num2} = ${variable}`; correctAnswer = result; }
                         break;
                     case ProblemType.ONE_STEP_SUB:
-                        // Generate result and num2 first to control magnitude
-                        result = getRandomInt(10, 500); num2 = getRandomInt(10, 500); num1 = result + num2; // num1 can be up to 1000
+                        result = getRandomInt(10, 500); num2 = getRandomInt(10, 500); num1 = result + num2;
                         const unknownSub = getRandomInt(1, 3);
                         if (unknownSub === 1) { problemText = `${variable} - ${num2} = ${result}`; correctAnswer = num1; }
                         else if (unknownSub === 2) { problemText = `${num1} - ${variable} = ${result}`; correctAnswer = num2; }
                         else { problemText = `${num1} - ${num2} = ${variable}`; correctAnswer = result; }
                         break;
                     case ProblemType.ONE_STEP_MUL:
-                        // Keep multipliers smaller to avoid huge results quickly
-                        num1 = getRandomInt(2, 20); num2 = getRandomInt(2, 50); result = num1 * num2; // Result up to 1000
+                        num1 = getRandomInt(2, 20); num2 = getRandomInt(2, 50); result = num1 * num2;
                         const unknownMul = getRandomInt(1, 3);
                         if (unknownMul === 1) { problemText = `${variable} × ${num2} = ${result}`; correctAnswer = num1; }
                         else if (unknownMul === 2) { problemText = `${num1} × ${variable} = ${result}`; correctAnswer = num2; }
                         else { problemText = `${num1} × ${num2} = ${variable}`; correctAnswer = result; }
                         break;
                     case ProblemType.ONE_STEP_DIV:
-                        // Generate result and divisor first for whole numbers
-                        result = getRandomInt(2, 50); num2 = getRandomInt(2, 20); num1 = result * num2; // Dividend up to 1000
+                        result = getRandomInt(2, 50); num2 = getRandomInt(2, 20); num1 = result * num2;
                         const unknownDiv = getRandomInt(1, 3);
                         if (unknownDiv === 1) { problemText = `${variable} ÷ ${num2} = ${result}`; correctAnswer = num1; }
-                        else if (unknownDiv === 2) { // num1 / variable = result -> variable = num1 / result
+                        else if (unknownDiv === 2) {
                             if (num1 === 0 || result === 0 || num1 % result !== 0) throw new Error("Invalid division setup");
                             correctAnswer = num1 / result; if (correctAnswer === 0) throw new Error("Division by zero variable");
                             problemText = `${num1} ÷ ${variable} = ${result}`;
                         } else { problemText = `${num1} ÷ ${num2} = ${variable}`; correctAnswer = result; }
                         break;
-
-                    // --- TWO-STEP (with 3-digit potential) ---
                     case ProblemType.TWO_STEP_AX_PLUS_B:
-                        correctAnswer = getRandomInt(10, 100); num1 = getRandomInt(2, 10); // Keep coefficient smaller
-                        num2 = getRandomInt(10, 100); result = (num1 * correctAnswer) + num2; // Result can be > 1000 but calculation involves smaller numbers
+                        correctAnswer = getRandomInt(10, 100); num1 = getRandomInt(2, 10);
+                        num2 = getRandomInt(10, 100); result = (num1 * correctAnswer) + num2;
                         problemText = `${num1}${variable} + ${num2} = ${result}`; break;
                     case ProblemType.TWO_STEP_AX_MINUS_B:
                         correctAnswer = getRandomInt(10, 100); num1 = getRandomInt(2, 10);
                         num2 = getRandomInt(10, 100); result = (num1 * correctAnswer) - num2;
-                        if (result <= 0) throw new Error("Negative result in ax-b"); // Regenerate if result is not positive
+                        if (result <= 0) throw new Error("Negative result in ax-b");
                         problemText = `${num1}${variable} - ${num2} = ${result}`; break;
                     case ProblemType.TWO_STEP_X_DIV_A_PLUS_B:
-                        correctAnswer = getRandomInt(10, 200); num1 = getRandomInt(2, 10); // Keep divisor smaller
+                        correctAnswer = getRandomInt(10, 200); num1 = getRandomInt(2, 10);
                         num2 = getRandomInt(10, 100);
-                        // Ensure correctAnswer is divisible by num1
                         if (correctAnswer % num1 !== 0) correctAnswer += (num1 - (correctAnswer % num1));
                         if (correctAnswer === 0) throw new Error("x=0 in x/a+b");
                         result = (correctAnswer / num1) + num2; problemText = `${variable} ÷ ${num1} + ${num2} = ${result}`; break;
@@ -290,42 +291,36 @@
                         result = (correctAnswer / num1) - num2;
                         if (result <= 0) throw new Error("Negative result in x/a-b");
                         problemText = `${variable} ÷ ${num1} - ${num2} = ${result}`; break;
-
-                    // --- ADVANCED (with 3-digit potential) ---
                     case ProblemType.SYSTEM_SIMPLE:
                         let valA = getRandomInt(20, 200); let valD = getRandomInt(10, 100); let valE = getRandomInt(10, 100);
-                        let valB = valD + valE; let valC = valA + valB; // Sums can be 3-4 digits
+                        let valB = valD + valE; let valC = valA + valB;
                         let askForA = Math.random() < 0.5;
                         correctAnswer = askForA ? valA : valB; otherAnswer = askForA ? valB : valA;
                         problemText = `Solve:\n  a + b = ${valC}\n  b - ${valD} = ${valE}\n\nFind '${askForA ? 'a' : 'b'}':`; break;
                     case ProblemType.WORD_LINEAR:
-                        num1 = getRandomInt(2, 10); correctAnswer = getRandomInt(10, 100); // Answer up to 100
-                        num2 = getRandomInt(20, 200); result = num1 * correctAnswer + num2; // Result can be 3-4 digits
+                        num1 = getRandomInt(2, 10); correctAnswer = getRandomInt(10, 100);
+                        num2 = getRandomInt(20, 200); result = num1 * correctAnswer + num2;
                         problemText = `Word Problem:\n${num1} times a number ('${variable}') plus ${num2} equals ${result}.\n\nWhat is '${variable}'?`; break;
                     case ProblemType.CONSECUTIVE_TWO:
-                        correctAnswer = getRandomInt(50, 500); result = correctAnswer + (correctAnswer + 1); // Sum up to 1001
+                        correctAnswer = getRandomInt(50, 500); result = correctAnswer + (correctAnswer + 1);
                         problemText = `Consecutive Integers:\nThe sum of two consecutive integers is ${result}.\n\nWhat is the first integer?`; break;
-                    case ProblemType.SYSTEM_SUBSTITUTION: // Buckets
-                        let valXSub = getRandomInt(50, 300); num1 = getRandomInt(20, 100); // Difference
-                        let valYSub = valXSub + num1; result = valXSub + valYSub; // Sum can be large
+                    case ProblemType.SYSTEM_SUBSTITUTION:
+                        let valXSub = getRandomInt(50, 300); num1 = getRandomInt(20, 100);
+                        let valYSub = valXSub + num1; result = valXSub + valYSub;
                         let askForXSub = Math.random() < 0.5; correctAnswer = askForXSub ? valXSub : valYSub; otherAnswer = askForXSub ? valYSub : valXSub;
                         problemText = `Solve:\n  x + y = ${result}\n  y = x + ${num1}\n\nFind '${askForXSub ? 'x' : 'y'}':`; break;
                     case ProblemType.CONSECUTIVE_THREE:
-                        correctAnswer = getRandomInt(50, 300); result = correctAnswer + (correctAnswer + 1) + (correctAnswer + 2); // Sum can be ~900
+                        correctAnswer = getRandomInt(50, 300); result = correctAnswer + (correctAnswer + 1) + (correctAnswer + 2);
                          problemText = `Consecutive Integers:\nThe sum of three consecutive integers is ${result}.\n\nWhat is the first integer?`; break;
                     case ProblemType.SYSTEM_SUM_DIFF:
-                        // Ensure x > y and difference is positive
                         let valXSum = getRandomInt(50, 500); let valYSum = getRandomInt(20, valXSum - 10);
-                        num1 = valXSum + valYSum; // Sum can be up to ~1000
-                        num2 = valXSum - valYSum; // Difference
+                        num1 = valXSum + valYSum; num2 = valXSum - valYSum;
                         let askForXSum = Math.random() < 0.5; correctAnswer = askForXSum ? valXSum : valYSum; otherAnswer = askForXSum ? valYSum : valXSum;
                         problemText = `Solve:\n  x + y = ${num1}\n  x - y = ${num2}\n\nFind '${askForXSum ? 'x' : 'y'}':`; break;
-
                     default: throw new Error("Unknown problem type");
                 }
             } catch (error) {
                 console.error("Error generating problem:", error);
-                // Fallback with slightly larger numbers
                 problemText = `100 + ${variable} = 250`; correctAnswer = 150;
             }
             currentProblem = { text: problemText, variable: variable, type: type };
@@ -338,49 +333,49 @@
         /** Generates answer options. */
         function generateOptions() {
             const options = [correctAnswer];
-            // Add the 'other' variable from system problems as a potential incorrect answer
             if (otherAnswer !== null && otherAnswer !== correctAnswer && !options.includes(otherAnswer)) { options.push(otherAnswer); }
             let attempts = 0;
-            while (options.length < 3 && attempts < 20) { // Increased attempts for larger number ranges
-                let incorrectOption;
-                const baseValue = Math.abs(correctAnswer);
-                // Adjust offset generation for larger numbers
-                const offsetMagnitude = Math.max(5, Math.min(50, Math.floor(baseValue * 0.1) + getRandomInt(1,15))); // Smaller percentage, larger random range
+            while (options.length < 3 && attempts < 20) {
+                let incorrectOption; const baseValue = Math.abs(correctAnswer);
+                const offsetMagnitude = Math.max(5, Math.min(50, Math.floor(baseValue * 0.1) + getRandomInt(1,15)));
                 const offset = offsetMagnitude * (Math.random() < 0.5 ? -1 : 1);
                 incorrectOption = correctAnswer + offset;
-
-                // Ensure incorrect options are reasonably different and not negative if answer is positive
                 if (incorrectOption !== correctAnswer && !options.includes(incorrectOption) && (correctAnswer < 0 || incorrectOption >= 0) ) {
                      options.push(incorrectOption);
                 }
                 attempts++;
             }
-            // Fallback if still not enough options
             while (options.length < 3) {
                  let fallbackOffset = getRandomInt(5, 50) * (options.length % 2 === 0 ? 1 : -1);
-                 let fallbackOption = Math.max(0, options[0] + fallbackOffset + options.length); // Ensure non-negative fallback
+                 let fallbackOption = Math.max(0, options[0] + fallbackOffset + options.length);
                  if (!options.includes(fallbackOption)) { options.push(fallbackOption); }
-                 else { options.push(Math.max(0, options[0] + 100 + options.length)); } // Failsafe unique option
+                 else { options.push(Math.max(0, options[0] + 100 + options.length)); }
             }
             shuffleArray(options); displayOptions(options.slice(0, 3));
         }
-
 
         /** Displays the answer options on the buttons. */
         function displayOptions(options) {
             answerButtons.forEach((button, index) => {
                 if (options[index] !== undefined) { button.textContent = options[index]; button.dataset.value = options[index]; button.disabled = false; }
-                else { button.textContent = '?'; button.dataset.value = NaN; button.disabled = true; } // Fallback
+                else { button.textContent = '?'; button.dataset.value = NaN; button.disabled = true; }
             });
         }
 
         /** Checks if the selected answer is correct. */
         function handleAnswerClick(event) {
             if (isGameOver) return; const selectedValue = parseInt(event.target.dataset.value, 10); if (isNaN(selectedValue)) return;
+
+            questionsAttempted++; // Increment on every answer click
+
             answerButtons.forEach(button => button.disabled = true);
             if (selectedValue === correctAnswer) {
                 score++; showFeedback(true); updateProgress();
-                if (score >= maxScore) { winGame(); } else { setTimeout(generateProblem, 1200); }
+                if (score >= maxScore) {
+                    winGame();
+                } else {
+                    setTimeout(generateProblem, 1200);
+                }
             } else {
                 score = Math.max(0, score - 1); showFeedback(false); updateProgress();
                 gameContainer.classList.add('shake'); setTimeout(() => gameContainer.classList.remove('shake'), 300);
@@ -405,21 +400,48 @@
 
         /** Handles the game win condition. */
         function winGame() {
-            isGameOver = true; problemBox.style.display = 'none'; answerOptionsContainer.style.display = 'none';
-            winMessage.style.display = 'block'; kittenIcon.style.left = '95%'; answerButtons.forEach(button => button.disabled = true);
+            isGameOver = true;
+            problemBox.style.display = 'none';
+            answerOptionsContainer.style.display = 'none';
+
+            // Construct win message with stats
+            winMessageElement.innerHTML = `
+                <p>🎉 You did it! The kitten reached the bowl! 🎉</p>
+                <p class="stats">You answered ${questionsAttempted} questions to complete the journey.</p>
+                <button id="play-again">Play Again?</button>
+            `;
+            winMessageElement.style.display = 'block';
+
+            // Add event listener to the new play again button
+            const playAgainButton = document.getElementById('play-again');
+            if(playAgainButton) { // Check if button exists before adding listener
+                playAgainButton.addEventListener('click', resetGame);
+            }
+
+            kittenIcon.style.left = '95%';
+            answerButtons.forEach(button => button.disabled = true);
         }
 
         /** Resets the game. */
         function resetGame() {
-            score = 0; isGameOver = false; currentProblem = null; correctAnswer = 0; otherAnswer = null;
-            winMessage.style.display = 'none'; problemBox.style.display = 'block'; answerOptionsContainer.style.display = 'block';
-            updateProgress(); generateProblem();
+            score = 0;
+            questionsAttempted = 0; // Reset attempts counter
+            isGameOver = false;
+            currentProblem = null;
+            correctAnswer = 0;
+            otherAnswer = null;
+            winMessageElement.style.display = 'none'; // Hide win message
+            winMessageElement.innerHTML = ''; // Clear previous win message content
+            problemBox.style.display = 'block';
+            answerOptionsContainer.style.display = 'block';
+            updateProgress();
+            generateProblem();
         }
 
         // --- Initialization ---
         function initializeGame() {
             answerButtons.forEach(button => { button.addEventListener('click', handleAnswerClick); });
-            playAgainButton.addEventListener('click', resetGame);
+            // Play again button is now added dynamically, so initial listener is removed from here.
             generateProblem(); updateProgress();
         }
         document.addEventListener('DOMContentLoaded', initializeGame);
