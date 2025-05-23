@@ -317,15 +317,21 @@
                         problemText = `Solve:\n  x + y = ${num1}\n  x - y = ${num2}\n\nFind '${askForXSum ? 'x' : 'y'}':`; break;
                     default: throw new Error("Unknown problem type");
                 }
-            } catch (error) {
-                console.error("Error generating problem (type attempt: " + type + "):", error.message, "Falling back to default.");
+            } catch (e) { // Refined catch block
+                let errorMessage = "Unknown error during problem generation.";
+                if (e && e.message) {
+                    errorMessage = e.message;
+                }
+                console.error("Error generating problem (type attempt: " + type + "):", errorMessage, "Falling back to default.");
                 variable = 'x'; // Ensure variable is defined for fallback
                 problemText = `100 + ${variable} = 250`;
                 correctAnswer = 150;
                 type = -1; // Indicate fallback type
             }
+            // This part executes even if an error was caught and handled above
             currentProblem = { text: problemText, variable: variable, type: type };
-            displayProblem(); generateOptions();
+            displayProblem();
+            generateOptions(); // This calls displayOptions which re-enables buttons
         }
 
         /** Displays the current problem. */
@@ -409,11 +415,10 @@
             problemBox.style.display = 'none';
             answerOptionsContainer.style.display = 'none';
 
-            // Clear previous content and create new elements
-            winMessageElement.innerHTML = ''; // Clear first
+            winMessageElement.innerHTML = ''; 
 
             const winText = document.createElement('p');
-            winText.className = 'main-win-text'; // Add class for styling
+            winText.className = 'main-win-text'; 
             winText.innerHTML = `🎉 You did it! The kitten reached the bowl! 🎉`;
 
             const statsText = document.createElement('p');
@@ -421,7 +426,7 @@
             statsText.textContent = `You answered ${questionsAttempted} questions to complete the journey.`;
 
             const playAgainBtn = document.createElement('button');
-            playAgainBtn.id = 'play-again'; // Keep ID for styling
+            playAgainBtn.id = 'play-again'; 
             playAgainBtn.textContent = 'Play Again?';
             playAgainBtn.addEventListener('click', resetGame);
 
