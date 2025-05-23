@@ -114,7 +114,7 @@
             margin-top: 1rem;
             line-height: 1.6; /* More line spacing for stats */
         }
-        .win-message p { /* Style for the main win message text */
+        .win-message p.main-win-text { /* Style for the main win message text */
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
         }
@@ -123,7 +123,7 @@
             color: #4b5563; /* Medium gray for stats */
             font-weight: normal;
         }
-        #play-again {
+        #play-again { /* ID for styling the button */
              background-color: #facc15; /* Yellow */
              color: #1f2937;
              padding: 0.8rem 1.6rem;
@@ -318,8 +318,11 @@
                     default: throw new Error("Unknown problem type");
                 }
             } catch (error) {
-                console.error("Error generating problem:", error);
-                problemText = `100 + ${variable} = 250`; correctAnswer = 150;
+                console.error("Error generating problem (type attempt: " + type + "):", error.message, "Falling back to default.");
+                variable = 'x'; // Ensure variable is defined for fallback
+                problemText = `100 + ${variable} = 250`;
+                correctAnswer = 150;
+                type = -1; // Indicate fallback type
             }
             currentProblem = { text: problemText, variable: variable, type: type };
             displayProblem(); generateOptions();
@@ -377,7 +380,6 @@
             } else { // Incorrect answer
                 score = Math.max(0, score - 1); showFeedback(false); updateProgress();
                 gameContainer.classList.add('shake'); setTimeout(() => gameContainer.classList.remove('shake'), 300);
-                // **FIX:** Generate a new problem after an incorrect answer
                 setTimeout(() => {
                     if (!isGameOver) {
                         generateProblem(); // Load a new problem
@@ -407,17 +409,27 @@
             problemBox.style.display = 'none';
             answerOptionsContainer.style.display = 'none';
 
-            winMessageElement.innerHTML = `
-                <p>🎉 You did it! The kitten reached the bowl! 🎉</p>
-                <p class="stats">You answered ${questionsAttempted} questions to complete the journey.</p>
-                <button id="play-again">Play Again?</button>
-            `;
-            winMessageElement.style.display = 'block';
+            // Clear previous content and create new elements
+            winMessageElement.innerHTML = ''; // Clear first
 
-            const playAgainButton = document.getElementById('play-again');
-            if(playAgainButton) {
-                playAgainButton.addEventListener('click', resetGame);
-            }
+            const winText = document.createElement('p');
+            winText.className = 'main-win-text'; // Add class for styling
+            winText.innerHTML = `🎉 You did it! The kitten reached the bowl! 🎉`;
+
+            const statsText = document.createElement('p');
+            statsText.className = 'stats';
+            statsText.textContent = `You answered ${questionsAttempted} questions to complete the journey.`;
+
+            const playAgainBtn = document.createElement('button');
+            playAgainBtn.id = 'play-again'; // Keep ID for styling
+            playAgainBtn.textContent = 'Play Again?';
+            playAgainBtn.addEventListener('click', resetGame);
+
+            winMessageElement.appendChild(winText);
+            winMessageElement.appendChild(statsText);
+            winMessageElement.appendChild(playAgainBtn);
+
+            winMessageElement.style.display = 'block';
 
             kittenIcon.style.left = '95%';
             answerButtons.forEach(button => button.disabled = true);
