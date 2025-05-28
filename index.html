@@ -328,11 +328,12 @@
                         problemText = `${equationText}\n\nWhat is the value of '${variable}'?`;
                         break;
                     case ProblemType.SYSTEM_SIMPLE:
-                        let valA = getRandomInt(20, 200); let valD = getRandomInt(10, 100); let valE = getRandomInt(10, 100);
-                        let valB = valD + valE; let valC = valA + valB;
-                        let askForA = Math.random() < 0.5;
-                        correctAnswer = askForA ? valA : valB; otherAnswer = askForA ? valB : valA;
-                        problemText = `Equations:\n  a + b = ${valC}\n  b - ${valD} = ${valE}\n\nFind '${askForA ? 'a' : 'b'}':`;
+                        let valA_simple = getRandomInt(20, 200); let valD_simple = getRandomInt(10, 100); let valE_simple = getRandomInt(10, 100);
+                        let valB_simple = valD_simple + valE_simple; let valC_simple = valA_simple + valB_simple;
+                        let askForA_simple = Math.random() < 0.5;
+                        correctAnswer = askForA_simple ? valA_simple : valB_simple; otherAnswer = askForA_simple ? valB_simple : valA_simple;
+                        console.log(`SYSTEM_SIMPLE: Asking for ${askForA_simple ? 'a' : 'b'}. Correct: ${correctAnswer}. Other: ${otherAnswer}. (a=${valA_simple}, b=${valB_simple})`);
+                        problemText = `Equations:\n  a + b = ${valC_simple}\n  b - ${valD_simple} = ${valE_simple}\n\nFind '${askForA_simple ? 'a' : 'b'}':`;
                         break;
                     case ProblemType.WORD_LINEAR:
                         num1 = getRandomInt(2, 10); correctAnswer = getRandomInt(10, 100);
@@ -344,9 +345,11 @@
                         problemText = `Consecutive Integers:\nThe sum of two consecutive integers is ${result}.\n\nWhat is the first integer?`;
                         break;
                     case ProblemType.SYSTEM_SUBSTITUTION:
-                        let valXSub = getRandomInt(50, 300); num1 = getRandomInt(20, 100);
-                        let valYSub = valXSub + num1; result = valXSub + valYSub;
-                        let askForXSub = Math.random() < 0.5; correctAnswer = askForXSub ? valXSub : valYSub; otherAnswer = askForXSub ? valYSub : valXSub;
+                        let valXSub = getRandomInt(50, 300); num1 = getRandomInt(20, 100); // num1 is 'd' in y=x+d
+                        let valYSub = valXSub + num1; result = valXSub + valYSub; // result is 'c' in x+y=c
+                        let askForXSub = Math.random() < 0.5;
+                        correctAnswer = askForXSub ? valXSub : valYSub; otherAnswer = askForXSub ? valYSub : valXSub;
+                        console.log(`SYSTEM_SUBSTITUTION: Asking for ${askForXSub ? 'x' : 'y'}. Correct: ${correctAnswer}. Other: ${otherAnswer}. (x=${valXSub}, y=${valYSub})`);
                         problemText = `Solve:\n  x + y = ${result}\n  y = x + ${num1}\n\nFind '${askForXSub ? 'x' : 'y'}':`;
                         break;
                     case ProblemType.CONSECUTIVE_THREE:
@@ -354,9 +357,15 @@
                          problemText = `Consecutive Integers:\nThe sum of three consecutive integers is ${result}.\n\nWhat is the first integer?`;
                         break;
                     case ProblemType.SYSTEM_SUM_DIFF:
-                        let valXSum = getRandomInt(50, 500); let valYSum = getRandomInt(20, valXSum - 10);
-                        num1 = valXSum + valYSum; num2 = valXSum - valYSum;
-                        let askForXSum = Math.random() < 0.5; correctAnswer = askForXSum ? valXSum : valYSum; otherAnswer = askForXSum ? valYSum : valXSum;
+                        let valXSum = getRandomInt(50, 500);
+                        let valYSum = getRandomInt(20, valXSum - 10);
+                        if (valYSum < 1) valYSum = 1;
+                        num1 = valXSum + valYSum; // sum
+                        num2 = valXSum - valYSum; // difference
+                        let askForXSum = Math.random() < 0.5;
+                        correctAnswer = askForXSum ? valXSum : valYSum;
+                        otherAnswer = askForXSum ? valYSum : valXSum;
+                        console.log(`SYSTEM_SUM_DIFF: Asking for ${askForXSum ? 'x' : 'y'}. Correct: ${correctAnswer}. Other: ${otherAnswer}. (x=${valXSum}, y=${valYSum})`);
                         problemText = `Solve:\n  x + y = ${num1}\n  x - y = ${num2}\n\nFind '${askForXSum ? 'x' : 'y'}':`;
                         break;
                     default: throw new Error("Unknown problem type");
@@ -427,6 +436,15 @@
             if (isGameOver) return; const selectedValue = parseInt(event.target.dataset.value, 10); if (isNaN(selectedValue)) return;
 
             questionsAttempted++;
+            console.log(`--- handleAnswerClick ---`);
+            console.log(`Problem Type: ${currentProblem ? problemTypeNames[currentProblem.type] : 'N/A'}`);
+            console.log(`Selected Value: ${selectedValue}, Correct Answer according to game: ${correctAnswer}`);
+            if (currentProblem && (currentProblem.type === ProblemType.SYSTEM_SUM_DIFF || currentProblem.type === ProblemType.SYSTEM_SIMPLE || currentProblem.type === ProblemType.SYSTEM_SUBSTITUTION)) {
+                 // To get the original x and y for logging, we'd need to store them in currentProblem or re-derive.
+                 // For now, logging what was *asked for* vs what was *selected* is key.
+                 console.log(`The question asked to find: '${currentProblem.variable}' (Note: for systems, this 'variable' in currentProblem might be a generic 'x' or 'a', the actual variable asked is in the problemText)`);
+            }
+
 
             answerButtons.forEach(button => button.disabled = true);
             if (selectedValue === correctAnswer) {
@@ -455,7 +473,6 @@
             const iconToShow = isCorrect ? feedbackCorrect : feedbackIncorrect;
             const iconToHide = isCorrect ? feedbackIncorrect : feedbackCorrect;
             iconToHide.classList.remove('show'); iconToShow.classList.add('show');
-            // Hide the icon after 1.1 seconds (just before new problem appears)
             setTimeout(() => {
                 iconToShow.classList.remove('show');
             }, 1100);
